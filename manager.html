@@ -175,7 +175,6 @@ select:focus,input.f:focus{border-color:var(--acc)}
 </style>
 </head>
 <body>
-<div id="healthBanner" style="display:none"></div>
 <div class="app">
   <header class="top">
     <button class="burger" id="burger" aria-label="Meniu">≡</button>
@@ -891,14 +890,6 @@ $('.credit').innerHTML=`Date: FIFA via open-source (emrbli/worldcup · openfootb
 route();
 refreshLive(null);
 enrich();
-/* banner de health: alerte pipeline (pick netrimis/exit 3) + heartbeat vechi — vizibil pe telefon */
-(function(){try{var h=(typeof DATA!=='undefined')&&DATA.health;var b=document.getElementById('healthBanner');if(!b||!h)return;
-var m=[];(h.alerts||[]).forEach(function(a){if(a&&a.text)m.push('⚠️ '+a.text);});
-if(h.stale_h!=null&&h.stale_h>17)m.push('⚠️ Pipeline n-a rulat de '+h.stale_h+'h (posibil eșuat)');
-if(!m.length){b.style.display='none';return;}
-b.innerHTML=m.join('<br>')+'<div style="font-weight:400;font-size:11px;opacity:.8;margin-top:3px">verificat '+(h.checked||'')+' — rezolvă în sheet; dispare la următoarea rulare</div>';
-b.style.cssText='display:block;background:#7f1d1d;color:#fff;padding:11px 14px;font-size:14px;font-weight:700;position:sticky;top:0;z-index:99999;border-bottom:2px solid #ef4444;line-height:1.35';
-}catch(e){}})();
 </script>
 </body>
 </html>
