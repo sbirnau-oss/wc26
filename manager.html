@@ -564,7 +564,7 @@ const fmBadge=p=>{const fm=fmOf(p);const base=p.p;
   return`<span class="pos ${base}" style="width:auto;min-width:30px;padding:0 6px" title="${esc(POS_RO[base])}">${esc(fmStr(fm))}</span>`};
 
 /* ---------- poze jucători: FIFA CDN → Wikimedia Commons → inițiale ---------- */
-const commonsThumb=(f,w)=>'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(f)+'?width='+w;
+const commonsThumb=(f,w)=>{let n;try{n=decodeURIComponent(f);}catch(e){n=f;}return 'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(n)+'?width='+w;};
 function photoSrcs(p,w){const a=[];
   if(p.fid)a.push(`https://api.fifa.com/api/v3/picture/players-sq-3/${p.fid}`);
   const e=ENR[p.n];if(e&&e.img)a.push(commonsThumb(e.img,w));
