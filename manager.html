@@ -90,6 +90,20 @@ select:focus,input.f:focus{border-color:var(--acc)}
 .gcard a:hover{background:var(--panel3)}
 .gcard .rk{margin-left:auto;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
 .hostb{font-size:9.5px;background:#2c2358;color:var(--acc2);border:1px solid var(--acc);padding:1px 6px;border-radius:99px;letter-spacing:1px;font-weight:700}
+/* carduri grupe pe clasament real (home) */
+.gcard .grow{gap:9px}
+.gcard .grow.elim{opacity:.5}
+.gcard .gpos{flex:none;width:20px;text-align:center;font-weight:800;font-size:12px;color:var(--dim);border-radius:4px;padding:2px 0}
+.gcard .gpos.q1{background:rgba(51,217,124,.16);color:var(--go)}
+.gcard .gpos.q3{background:rgba(242,169,59,.18);color:var(--warn)}
+.gcard .gpos.out{color:#4c5474}
+.gcard .gnm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gcard .gpt{flex:none;font-weight:800;color:var(--acc2);font-size:14px;width:20px;text-align:right;font-variant-numeric:tabular-nums}
+.gcard .ggd{flex:none;color:var(--mut);font-size:11.5px;width:28px;text-align:right;font-variant-numeric:tabular-nums}
+.gcard .gtag{margin-left:auto;color:var(--dim);font-size:11px;font-variant-numeric:tabular-nums}
+.fdots{display:inline-flex;gap:2px;flex:none}
+.fd{width:6px;height:6px;border-radius:50%;display:inline-block}
+.fd.w{background:var(--go)}.fd.d{background:var(--warn)}.fd.l{background:#e0566b}
 /* team header */
 .thead{display:flex;gap:18px;align-items:center;background:linear-gradient(120deg,#241f4d 0%,#1a2033 55%,#171c29 100%);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;flex-wrap:wrap}
 .crest{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 4px 10px #0008)}
@@ -340,13 +354,25 @@ V.home=()=>{
 const mRow=m=>{const h=m.h?tlink(m.h):`<span class="tn mutd">${esc(m.hp||'?')}</span>`,a=m.a?tlink(m.a):`<span class="tn mutd">${esc(m.ap||'?')}</span>`;
   return `<div class="mrow" id="m${m.no}">${h}<span class="vs">vs</span>${a}<span class="when">${koRO(m.ko)}<br><span style="color:var(--dim)">${esc(m.city||'')}</span></span></div>`};
 V.teams=(bare)=>{
-  const html=`<div class="grid groups">${[...'ABCDEFGHIJKL'].map(g=>`
-    <div class="panel gcard"><a class="ph" href="#/group/${g}" style="cursor:pointer">Grupa <b>${g}</b><span style="margin-left:auto;color:var(--dim);font-size:11px">clasament →</span></a>
-    ${T.filter(t=>t.grp===g).sort((a,b)=>(a.rank||99)-(b.rank||99)).map(t=>`
-      <a href="#/team/${t.code}">${flag(t.iso)}<span>${esc(t.name)}</span>${t.host?'<span class="hostb">GAZDĂ</span>':''}<span class="rk">FIFA #${t.rank??'–'}</span></a>`).join('')}
-    </div>`).join('')}</div>`;
+  const best3=bestThirds();
+  const anyPlayed=[...'ABCDEFGHIJKL'].some(g=>standings(g).some(s=>s.m>0));
+  const html=`<div class="grid groups">${[...'ABCDEFGHIJKL'].map(g=>{
+    const st=standings(g), played=st.some(s=>s.m>0);
+    const ms=DATA.matches.filter(m=>m.grp===g), np=ms.filter(m=>resOf(m)).length;
+    const tag=played?`<span class="gtag">${np}/${ms.length} jucate</span>`
+      :`<span style="margin-left:auto;color:var(--dim);font-size:11px">clasament →</span>`;
+    const rows=played
+      ? st.map((s,i)=>{const q=qualClass(g,i,s.t.code,best3),gd=s.gm-s.gp;
+          return `<a href="#/team/${s.t.code}" class="grow ${q==='out'?'elim':''}"><span class="gpos ${q}">${i+1}</span>${flag(s.t.iso)}<span class="gnm">${esc(s.t.name)}${s.t.host?' <span class="hostb">GAZDĂ</span>':''}</span>${formDots(s.t.code,g)}<span class="gpt">${s.pt}</span><span class="ggd">${gd>0?'+':''}${gd}</span></a>`}).join('')
+      : T.filter(t=>t.grp===g).sort((a,b)=>(a.rank||99)-(b.rank||99)).map(t=>
+          `<a href="#/team/${t.code}">${flag(t.iso)}<span class="gnm">${esc(t.name)}</span>${t.host?'<span class="hostb">GAZDĂ</span>':''}<span class="rk">FIFA #${t.rank??'–'}</span></a>`).join('');
+    return `<div class="panel gcard"><a class="ph" href="#/group/${g}" style="cursor:pointer">Grupa <b>${g}</b>${tag}</a>${rows}</div>`;
+  }).join('')}</div>`;
   if(bare===true)return html;
-  return `<div class="h1">Echipe</div><div class="sub">Cele 48 de naționale calificate, pe grupe, ordonate după clasamentul FIFA.</div>${html}`;
+  const sub=anyPlayed
+    ? 'Cele 48 de naționale, pe grupe — clasament real după rezultate. <span style="color:var(--go)">▎</span> calificate · <span style="color:var(--warn)">▎</span> locul 3 calificat · estompat = eliminate.'
+    : 'Cele 48 de naționale calificate, pe grupe, ordonate după clasamentul FIFA.';
+  return `<div class="h1">Echipe</div><div class="sub">${sub}</div>${html}`;
 };
 V.group=(g)=>{
   const ts=T.filter(t=>t.grp===g);
@@ -594,6 +620,18 @@ function standings(g){const ts=T.filter(t=>t.grp===g);
     A.m++;B.m++;A.gm+=r.hs;A.gp+=r.as;B.gm+=r.as;B.gp+=r.hs;
     if(r.hs>r.as){A.v++;B.i++;A.pt+=3}else if(r.hs<r.as){B.v++;A.i++;B.pt+=3}else{A.e++;B.e++;A.pt++;B.pt++}}
   return Object.values(S).sort((a,b)=>b.pt-a.pt||((b.gm-b.gp)-(a.gm-a.gp))||b.gm-a.gm||((a.t.rank||99)-(b.t.rank||99)))}
+/* ---------- calificare pe locul REAL (nu FIFA) ---------- */
+function groupDone(g){const ms=DATA.matches.filter(m=>m.grp===g);return ms.length>0&&ms.every(m=>resOf(m))}
+function bestThirds(){const th=[];[...'ABCDEFGHIJKL'].forEach(g=>{const st=standings(g);if(st[2]&&st[2].m>0)th.push(st[2])});
+  th.sort((a,b)=>b.pt-a.pt||((b.gm-b.gp)-(a.gm-a.gp))||b.gm-a.gm||((a.t.rank||99)-(b.t.rank||99)));
+  return new Set(th.slice(0,8).map(s=>s.t.code))}
+function qualClass(g,i,code,best3){if(!groupDone(g))return '';if(i<2)return 'q1';if(i===2)return (best3||bestThirds()).has(code)?'q3':'out';return 'out'}
+function formDots(code,g){
+  let f;
+  if(g){f=[];for(const r of LIVE.results){const H=byCode[r.h],A=byCode[r.a];if(!H||!A||H.grp!==g||A.grp!==g)continue;
+    if(r.h===code)f.push(r.hs>r.as?'V':r.hs<r.as?'Î':'E');else if(r.a===code)f.push(r.as>r.hs?'V':r.as<r.hs?'Î':'E')}}
+  else f=FORM[code]||[];
+  return f.length?`<span class="fdots">${f.map(x=>`<i class="fd ${x==='V'?'w':x==='Î'?'l':'d'}"></i>`).join('')}</span>`:''}
 function scorerHTML(code,raw){const t=byCode[code];const v=nrm(raw);
   const p=t.players.find(x=>nrm(x.n)===v)||t.players.find(x=>nrm(x.n).includes(v.split(' ').pop()));
   return p?`<a onclick="event.stopPropagation();openPid('${esc(pidOf({...p,team:code})).replace(/'/g,"\\'")}')" style="cursor:pointer">${esc(raw)}</a>`:esc(raw)}
@@ -661,6 +699,7 @@ document.head.insertAdjacentHTML('beforeend',`<style>
 .st-tbl .pz{width:26px;color:var(--dim);font-weight:700}
 .st-tbl tr.q1 td:first-child{box-shadow:inset 3px 0 0 var(--go)}
 .st-tbl tr.q3 td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+.st-tbl tr.out{opacity:.6}
 .vphoto{width:100%;height:140px;object-fit:cover;display:block;background:#10141f}
 .goalrow{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:#c4cade;padding:2px 0}
 .goalrow .min{color:var(--dim);font-variant-numeric:tabular-nums}
@@ -814,16 +853,17 @@ V.team=function(code){
 V.group=function(g){
   const ms=DATA.matches.filter(m=>m.grp===g);
   const st=standings(g);
+  const best3=bestThirds();
   const played=ms.filter(m=>resOf(m)),upcoming=ms.filter(m=>!resOf(m));
   const sc=Object.entries(SCORERS).map(([k,v])=>{const[c,n]=k.split('|');return{c,n,v}})
     .filter(x=>byCode[x.c].grp===g).sort((a,b)=>b.v-a.v).slice(0,6);
   const tbl=`<table class="st-tbl"><thead><tr><th class="pz">Poz</th><th>Echipă</th><th class="num">M</th><th class="num">V</th><th class="num">E</th><th class="num">Î</th><th class="num">GM</th><th class="num">GP</th><th class="num">+/-</th><th class="num">Pct</th></tr></thead><tbody>
-    ${st.map((s,i)=>`<tr class="row ${i<2?'q1':i===2?'q3':''}" onclick="location.hash='#/team/${s.t.code}'">
-      <td class="pz">${i+1}</td><td><span style="display:inline-flex;align-items:center;gap:8px;font-weight:700">${flag(s.t.iso,'s')}${esc(s.t.name)}</span></td>
+    ${st.map((s,i)=>`<tr class="row ${qualClass(g,i,s.t.code,best3)}" onclick="location.hash='#/team/${s.t.code}'">
+      <td class="pz">${i+1}</td><td><span style="display:inline-flex;align-items:center;gap:8px;font-weight:700">${flag(s.t.iso,'s')}${esc(s.t.name)}</span> ${formDots(s.t.code,g)}</td>
       <td class="num">${s.m}</td><td class="num">${s.v}</td><td class="num">${s.e}</td><td class="num">${s.i}</td>
       <td class="num">${s.gm}</td><td class="num">${s.gp}</td><td class="num">${s.gm-s.gp>0?'+':''}${s.gm-s.gp}</td><td class="num"><b style="color:var(--acc2)">${s.pt}</b></td></tr>`).join('')}
   </tbody></table>
-  <div class="estnote" style="border:none">■ verde — calificare directă (primele 2) · ■ galben — posibil calificată ca una dintre cele mai bune 8 de pe locul 3.</div>`;
+  <div class="estnote" style="border:none">${groupDone(g)?'■ verde — calificate direct (primele 2) · ■ galben — locul 3 calificat (una dintre cele mai bune 8 din 12) · estompat = eliminate.':'■ verde — primele 2 · ■ galben — locul 3 (calificare în funcție de celelalte grupe).'}</div>`;
   return `<div class="eyebrow">Faza grupelor · CM 2026</div><div class="h1">Grupa ${g}</div>
   <div class="sub">${st.map(s=>s.t.name).join(' · ')}</div>
   <div class="cols2">
