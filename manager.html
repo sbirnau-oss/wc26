@@ -109,7 +109,7 @@ select:focus,input.f:focus{border-color:var(--acc)}
 .bracket{display:flex;align-items:center;min-width:max-content;padding:0 4px}
 .bside{display:flex;align-items:center}
 .bnode{display:flex;align-items:center}
-.bnode.left{flex-direction:row}.bnode.right{flex-direction:row-reverse}
+.bnode.left{flex-direction:row}.bnode.right{flex-direction:row}
 .bkids{display:flex;flex-direction:column;justify-content:center;gap:8px;position:relative}
 .bself,.bleaf{display:flex;align-items:center}
 .bself{position:relative}
@@ -128,9 +128,12 @@ select:focus,input.f:focus{border-color:var(--acc)}
 .brow.win .bsc{color:var(--go)}
 .bmatch.bfinal{width:138px;border-color:var(--warn)}
 .bmatch.bfinal .blabel{background:#2a2410;color:var(--warn)}
-.bcol.center{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 8px}
-.btrophy{font-size:20px;margin:8px 0 5px}
-.bthird{margin-top:4px}
+.bcol.center{display:flex;align-items:center;justify-content:center;padding:0 8px}
+.bfinalbox{position:relative;display:flex}
+.bfinalbox>.flbl{position:absolute;bottom:100%;left:0;right:0;text-align:center;margin-bottom:5px}
+.bbelow{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:12px;display:flex;flex-direction:column;align-items:center;white-space:nowrap}
+.btrophy{font-size:20px;margin:0 0 6px;text-align:center}
+.bthird{margin-top:2px}
 .rlabel{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:4px;text-align:center}
 /* conectori bracket */
 .bnode.left>.bself{padding-left:13px}.bnode.right>.bself{padding-right:13px}
@@ -703,8 +706,8 @@ function bracketHTML(){if(!MBYNO[104])return '';const f=feeders(104);if(!f)retur
   return `<div class="dhead" style="margin-top:26px">Schema eliminatoriilor <small>șaisprezecimi → finală · glisează lateral ⟷</small></div>
   <div class="bracket-wrap"><div class="bracket">
     <div class="bside left">${bnode(f[0],'left')}</div>
-    <div class="bcol center"><div class="rlabel">Finala</div>${matchCard(104)}<div class="btrophy">🏆</div>
-      <div class="bthird"><div class="rlabel">Finala mică</div>${matchCard(103)}</div></div>
+    <div class="bcol center"><div class="bfinalbox"><div class="rlabel flbl">Finala</div>${matchCard(104)}
+      <div class="bbelow"><div class="btrophy">🏆</div><div class="bthird"><div class="rlabel">Finala mică</div>${matchCard(103)}</div></div></div></div>
     <div class="bside right">${bnode(f[1],'right')}</div>
   </div></div>`}
 function scorerHTML(code,raw){const t=byCode[code];const v=nrm(raw);
