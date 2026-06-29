@@ -113,7 +113,9 @@ select:focus,input.f:focus{border-color:var(--acc)}
 .bkids{display:flex;flex-direction:column;justify-content:center;gap:8px;position:relative}
 .bself,.bleaf{display:flex;align-items:center}
 .bself{position:relative}
-.bmatch{width:120px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;overflow:hidden;margin:3px 0;cursor:default}
+.bmatch{width:120px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;overflow:hidden;margin:3px 0;cursor:pointer;transition:border-color .12s,transform .12s}
+.bmatch:hover{border-color:var(--acc);transform:translateY(-1px)}
+.bmatch:hover .blabel{color:var(--acc2)}
 .blabel{display:flex;justify-content:space-between;align-items:center;background:#161c2b;padding:2px 7px;font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);font-weight:700}
 .blabel .bno{color:#454d68;font-weight:600}
 .brow{display:flex;align-items:center;gap:6px;padding:4px 7px;font-size:12px;font-weight:600;min-height:23px}
@@ -132,14 +134,14 @@ select:focus,input.f:focus{border-color:var(--acc)}
 .rlabel{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:4px;text-align:center}
 /* conectori bracket */
 .bnode.left>.bself{padding-left:13px}.bnode.right>.bself{padding-right:13px}
-.bnode.left>.bself::before,.bnode.right>.bself::after{content:'';position:absolute;top:50%;width:13px;height:2px;background:var(--line)}
+.bnode.left>.bself::before,.bnode.right>.bself::after{content:'';position:absolute;top:50%;width:13px;height:2px;background:#404a66}
 .bnode.left>.bself::before{left:0}.bnode.right>.bself::after{right:0}
 .bnode.left>.bkids{padding-right:13px}.bnode.right>.bkids{padding-left:13px}
-.bnode.left>.bkids::after,.bnode.right>.bkids::before{content:'';position:absolute;top:25%;bottom:25%;width:2px;background:var(--line)}
+.bnode.left>.bkids::after,.bnode.right>.bkids::before{content:'';position:absolute;top:25%;bottom:25%;width:2px;background:#404a66}
 .bnode.left>.bkids::after{right:0}.bnode.right>.bkids::before{left:0}
 .bnode.left>.bkids>*,.bnode.right>.bkids>*{position:relative}
-.bnode.left>.bkids>*::after{content:'';position:absolute;right:-13px;top:50%;width:13px;height:2px;background:var(--line)}
-.bnode.right>.bkids>*::before{content:'';position:absolute;left:-13px;top:50%;width:13px;height:2px;background:var(--line)}
+.bnode.left>.bkids>*::after{content:'';position:absolute;right:-13px;top:50%;width:13px;height:2px;background:#404a66}
+.bnode.right>.bkids>*::before{content:'';position:absolute;left:-13px;top:50%;width:13px;height:2px;background:#404a66}
 .bcol.center .bfinal{position:relative}
 .bcol.center .bfinal::before,.bcol.center .bfinal::after{content:'';position:absolute;top:50%;width:8px;height:2px;background:var(--warn)}
 .bcol.center .bfinal::before{left:-8px}.bcol.center .bfinal::after{right:-8px}
@@ -681,7 +683,7 @@ function koLoser(no){const t=koTeams(no),w=koWinner(no);if(!w)return null;return
 function refCode(ref){if(!ref)return null;if(byCode[ref])return ref;const m=/^([WL])(\d+)$/.exec(ref);if(m)return m[1]==='W'?koWinner(+m[2]):koLoser(+m[2]);return null}
 function slotHTML(ref){
   const code=refCode(ref);
-  if(code){const t=byCode[code];return `<a class="bt" href="#/team/${code}"><img class="bfl" loading="lazy" src="https://flagcdn.com/w20/${t.iso}.png" alt="">${t.code}</a>`}
+  if(code){const t=byCode[code];return `<a class="bt" href="#/team/${code}" onclick="event.stopPropagation()"><img class="bfl" loading="lazy" src="https://flagcdn.com/w20/${t.iso}.png" alt="">${t.code}</a>`}
   const m=/^([WL])(\d+)$/.exec(ref||'');
   if(m){const ft=koTeams(+m[2]);if(ft.h&&ft.a)return `<span class="bt src">${byCode[ft.h].code}/${byCode[ft.a].code}</span>`;
     return `<span class="bt src">${m[1]==='W'?'înv.':'pierz.'} M${m[2]}</span>`}
@@ -690,7 +692,7 @@ function matchCard(no){const m=MBYNO[no];if(!m)return '';const t=koTeams(no),w=k
   const r=(t.h&&t.a)?(RES[t.h+'|'+t.a]||RES[t.a+'|'+t.h]):null;
   let hs='',as='';if(r){if(r.h===t.h){hs=r.hs;as=r.as}else{hs=r.as;as=r.hs}}
   const row=(ref,sc,win)=>`<div class="brow ${win?'win':''}">${slotHTML(ref)}<span class="bsc">${sc===''?'':sc}</span></div>`;
-  return `<div class="bmatch ${m.stage==='final'?'bfinal':''}">
+  return `<div class="bmatch ${m.stage==='final'?'bfinal':''}" onclick="openMatch(${no})">
     <div class="blabel">${STG_SHORT[m.stage]||''}<span class="bno">M${no}</span></div>
     ${row(m.h||m.hp,hs,w&&w===t.h)}${row(m.a||m.ap,as,w&&w===t.a)}</div>`}
 function bnode(no,side){const fd=feeders(no);
