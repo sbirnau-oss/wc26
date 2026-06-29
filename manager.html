@@ -104,6 +104,45 @@ select:focus,input.f:focus{border-color:var(--acc)}
 .fdots{display:inline-flex;gap:2px;flex:none}
 .fd{width:6px;height:6px;border-radius:50%;display:inline-block}
 .fd.w{background:var(--go)}.fd.d{background:var(--warn)}.fd.l{background:#e0566b}
+/* schema eliminatoriilor (bracket) */
+.bracket-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;padding:8px 0 14px}
+.bracket{display:flex;align-items:center;min-width:max-content;padding:0 4px}
+.bside{display:flex;align-items:center}
+.bnode{display:flex;align-items:center}
+.bnode.left{flex-direction:row}.bnode.right{flex-direction:row-reverse}
+.bkids{display:flex;flex-direction:column;justify-content:center;gap:8px;position:relative}
+.bself,.bleaf{display:flex;align-items:center}
+.bself{position:relative}
+.bmatch{width:120px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;overflow:hidden;margin:3px 0;cursor:default}
+.blabel{display:flex;justify-content:space-between;align-items:center;background:#161c2b;padding:2px 7px;font-size:8.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--dim);font-weight:700}
+.blabel .bno{color:#454d68;font-weight:600}
+.brow{display:flex;align-items:center;gap:6px;padding:4px 7px;font-size:12px;font-weight:600;min-height:23px}
+.brow+.brow{border-top:1px solid var(--line)}
+.brow.win{background:#1b2540;color:#fff}
+.bt{display:flex;align-items:center;gap:5px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;text-decoration:none}
+.bt.src{color:var(--dim);font-size:10.5px}
+.bfl{width:18px;height:12px;object-fit:cover;border-radius:2px;flex:none}
+.bsc{font-weight:800;color:var(--acc2);min-width:12px;text-align:right;font-variant-numeric:tabular-nums}
+.brow.win .bsc{color:var(--go)}
+.bmatch.bfinal{width:138px;border-color:var(--warn)}
+.bmatch.bfinal .blabel{background:#2a2410;color:var(--warn)}
+.bcol.center{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 8px}
+.btrophy{font-size:20px;margin:8px 0 5px}
+.bthird{margin-top:4px}
+.rlabel{font-size:9.5px;letter-spacing:1.3px;text-transform:uppercase;color:var(--dim);font-weight:700;margin-bottom:4px;text-align:center}
+/* conectori bracket */
+.bnode.left>.bself{padding-left:13px}.bnode.right>.bself{padding-right:13px}
+.bnode.left>.bself::before,.bnode.right>.bself::after{content:'';position:absolute;top:50%;width:13px;height:2px;background:var(--line)}
+.bnode.left>.bself::before{left:0}.bnode.right>.bself::after{right:0}
+.bnode.left>.bkids{padding-right:13px}.bnode.right>.bkids{padding-left:13px}
+.bnode.left>.bkids::after,.bnode.right>.bkids::before{content:'';position:absolute;top:25%;bottom:25%;width:2px;background:var(--line)}
+.bnode.left>.bkids::after{right:0}.bnode.right>.bkids::before{left:0}
+.bnode.left>.bkids>*,.bnode.right>.bkids>*{position:relative}
+.bnode.left>.bkids>*::after{content:'';position:absolute;right:-13px;top:50%;width:13px;height:2px;background:var(--line)}
+.bnode.right>.bkids>*::before{content:'';position:absolute;left:-13px;top:50%;width:13px;height:2px;background:var(--line)}
+.bcol.center .bfinal{position:relative}
+.bcol.center .bfinal::before,.bcol.center .bfinal::after{content:'';position:absolute;top:50%;width:8px;height:2px;background:var(--warn)}
+.bcol.center .bfinal::before{left:-8px}.bcol.center .bfinal::after{right:-8px}
 /* team header */
 .thead{display:flex;gap:18px;align-items:center;background:linear-gradient(120deg,#241f4d 0%,#1a2033 55%,#171c29 100%);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;margin-bottom:16px;flex-wrap:wrap}
 .crest{width:74px;height:74px;object-fit:contain;filter:drop-shadow(0 4px 10px #0008)}
@@ -632,6 +671,40 @@ function formDots(code,g){
     if(r.h===code)f.push(r.hs>r.as?'V':r.hs<r.as?'Î':'E');else if(r.a===code)f.push(r.as>r.hs?'V':r.as<r.hs?'Î':'E')}}
   else f=FORM[code]||[];
   return f.length?`<span class="fdots">${f.map(x=>`<i class="fd ${x==='V'?'w':x==='Î'?'l':'d'}"></i>`).join('')}</span>`:''}
+/* ---------- schema eliminatoriilor (bracket "road to final") ---------- */
+const MBYNO={};DATA.matches.forEach(m=>MBYNO[m.no]=m);
+const STG_SHORT={r32:'16-imi',r16:'Optimi',qf:'Sferturi',sf:'Semifinală',third:'Finala mică',final:'FINALA'};
+function feeders(no){const m=MBYNO[no];if(!m)return null;const f=r=>{const x=/^[WL](\d+)$/.exec(r||'');return x?+x[1]:null};const a=f(m.hp),b=f(m.ap);return (a==null&&b==null)?null:[a,b]}
+function koTeams(no){const m=MBYNO[no];if(!m)return{h:null,a:null};return{h:refCode(m.h||m.hp),a:refCode(m.a||m.ap)}}
+function koWinner(no){const t=koTeams(no);if(!t.h||!t.a)return null;const r=RES[t.h+'|'+t.a]||RES[t.a+'|'+t.h];if(!r||r.hs===r.as)return null;return r.hs>r.as?r.h:r.a}
+function koLoser(no){const t=koTeams(no),w=koWinner(no);if(!w)return null;return w===t.h?t.a:t.h}
+function refCode(ref){if(!ref)return null;if(byCode[ref])return ref;const m=/^([WL])(\d+)$/.exec(ref);if(m)return m[1]==='W'?koWinner(+m[2]):koLoser(+m[2]);return null}
+function slotHTML(ref){
+  const code=refCode(ref);
+  if(code){const t=byCode[code];return `<a class="bt" href="#/team/${code}"><img class="bfl" loading="lazy" src="https://flagcdn.com/w20/${t.iso}.png" alt="">${t.code}</a>`}
+  const m=/^([WL])(\d+)$/.exec(ref||'');
+  if(m){const ft=koTeams(+m[2]);if(ft.h&&ft.a)return `<span class="bt src">${byCode[ft.h].code}/${byCode[ft.a].code}</span>`;
+    return `<span class="bt src">${m[1]==='W'?'înv.':'pierz.'} M${m[2]}</span>`}
+  return `<span class="bt src">${esc(ref||'—')}</span>`}
+function matchCard(no){const m=MBYNO[no];if(!m)return '';const t=koTeams(no),w=koWinner(no);
+  const r=(t.h&&t.a)?(RES[t.h+'|'+t.a]||RES[t.a+'|'+t.h]):null;
+  let hs='',as='';if(r){if(r.h===t.h){hs=r.hs;as=r.as}else{hs=r.as;as=r.hs}}
+  const row=(ref,sc,win)=>`<div class="brow ${win?'win':''}">${slotHTML(ref)}<span class="bsc">${sc===''?'':sc}</span></div>`;
+  return `<div class="bmatch ${m.stage==='final'?'bfinal':''}">
+    <div class="blabel">${STG_SHORT[m.stage]||''}<span class="bno">M${no}</span></div>
+    ${row(m.h||m.hp,hs,w&&w===t.h)}${row(m.a||m.ap,as,w&&w===t.a)}</div>`}
+function bnode(no,side){const fd=feeders(no);
+  if(!fd)return `<div class="bleaf">${matchCard(no)}</div>`;
+  const kids=`<div class="bkids">${bnode(fd[0],side)}${bnode(fd[1],side)}</div>`,self=`<div class="bself">${matchCard(no)}</div>`;
+  return `<div class="bnode ${side}">${side==='left'?kids+self:self+kids}</div>`}
+function bracketHTML(){if(!MBYNO[104])return '';const f=feeders(104);if(!f)return '';
+  return `<div class="dhead" style="margin-top:26px">Schema eliminatoriilor <small>șaisprezecimi → finală · glisează lateral ⟷</small></div>
+  <div class="bracket-wrap"><div class="bracket">
+    <div class="bside left">${bnode(f[0],'left')}</div>
+    <div class="bcol center"><div class="rlabel">Finala</div>${matchCard(104)}<div class="btrophy">🏆</div>
+      <div class="bthird"><div class="rlabel">Finala mică</div>${matchCard(103)}</div></div>
+    <div class="bside right">${bnode(f[1],'right')}</div>
+  </div></div>`}
 function scorerHTML(code,raw){const t=byCode[code];const v=nrm(raw);
   const p=t.players.find(x=>nrm(x.n)===v)||t.players.find(x=>nrm(x.n).includes(v.split(' ').pop()));
   return p?`<a onclick="event.stopPropagation();openPid('${esc(pidOf({...p,team:code})).replace(/'/g,"\\'")}')" style="cursor:pointer">${esc(raw)}</a>`:esc(raw)}
@@ -914,7 +987,8 @@ V.home=function(){const now=new Date();
     <div class="panel"><div class="ph">🏅 Cele mai multe selecții</div>${lrow(topCaps,p=>p.cp)}</div>
   </div>
   <div class="dhead" style="margin-top:26px">Grupele <small>click pe litera grupei pentru clasament & rezultate</small></div>
-  ${V.teams(true)}`};
+  ${V.teams(true)}
+  ${bracketHTML()}`};
 const _leaders1=V.leaders;
 V.leaders=function(){const trow=(arr)=>arr.map(([t,v],i)=>`<a class="lrow" href="#/team/${t.code}"><span class="i">${i+1}</span>${flag(t.iso,'s')}<span><b>${esc(t.name)}</b></span><span class="v">${v}</span></a>`).join('');
   const lrow=(arr,vf)=>arr.map((p,i)=>`<div class="lrow" onclick="openPid('${esc(pidOf(p)).replace(/'/g,"\\'")}')"><span class="i">${i+1}</span>${pAva(p,28)}<span><b>${esc(p.n)}</b><br><span class="c">${esc(p.tn)} · ${esc(p.c||'')}</span></span><span class="v">${vf(p)}</span></div>`).join('');
