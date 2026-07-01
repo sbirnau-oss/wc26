@@ -289,7 +289,7 @@ $('#gq').innerHTML=[...'ABCDEFGHIJKL'].map(g=>`<a href="#/group/${g}"><b>${g}</b
 $('#todaylbl').textContent=new Date().toLocaleDateString('ro-RO',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 $('#burger').onclick=()=>$('#side').classList.toggle('open');
 $('#main').addEventListener('click',()=>$('#side').classList.remove('open'));
-$('#contBtn').onclick=()=>{const now=new Date();const nxt=DATA.matches.find(m=>koDate(m.ko)>now)||DATA.matches[0];location.hash='#/matches';setTimeout(()=>{const el=document.getElementById('m'+nxt.no);if(el){el.scrollIntoView({block:'center'});el.style.outline='2px solid var(--go)';setTimeout(()=>el.style.outline='',2200)}},60)};
+$('#contBtn').onclick=()=>{const now=new Date();const nxt=MSORT.find(m=>koDate(m.ko)>now)||MSORT[0];location.hash='#/matches';setTimeout(()=>{const el=document.getElementById('m'+nxt.no);if(el){el.scrollIntoView({block:'center'});el.style.outline='2px solid var(--go)';setTimeout(()=>el.style.outline='',2200)}},60)};
 /* ---------- search ---------- */
 const nrm=s=>s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const SIDX=[...T.map(t=>({k:nrm(t.name+' '+t.code),h:`#/team/${t.code}`,html:`${flag(t.iso,'s')}<span>${esc(t.name)}</span><span class="tag">echipă · Grupa ${t.grp}</span>`})),
@@ -658,6 +658,9 @@ function buildLive(){RES={};SCORERS={};FORM={};
     r.ga.forEach(([n])=>{const k=r.a+'|'+n;SCORERS[k]=(SCORERS[k]||0)+1});}}
 buildLive();
 const resOf=m=>m.h&&m.a?RES[m.h+'|'+m.a]:null;
+// meciurile in ordine CRONOLOGICA (numerele FIFA nu urmeaza kickoff-ul: M76 s-a
+// jucat inaintea lui M74) - pt Program, "urmatoarele meciuri" si butonul kickoff
+const MSORT=[...DATA.matches].sort((a,b)=>koDate(a.ko)-koDate(b.ko));
 function standings(g){const ts=T.filter(t=>t.grp===g);
   const S=Object.fromEntries(ts.map(t=>[t.code,{t,m:0,v:0,e:0,i:0,gm:0,gp:0,pt:0}]));
   for(const r of LIVE.results){if(!(r.h in S))continue;
@@ -726,9 +729,16 @@ async function refreshLive(btn){if(btn){btn.disabled=true;btn.textContent='↻ �
     const j=await r.json();const out=[];
     for(const lm of j.matches){let t1=lm.team1,t2=lm.team2;
       if(t1&&t1.name)t1=t1.name;if(t2&&t2.name)t2=t2.name;
-      const c1=N2C[t1],c2=N2C[t2],ft=lm.score&&lm.score.ft;
-      if(ft&&c1&&c2)out.push({h:c1,a:c2,hs:ft[0],as:ft[1],d:lm.date,
-        gh:(lm.goals1||[]).map(g=>[g.name,g.minute]),ga:(lm.goals2||[]).map(g=>[g.name,g.minute])})}
+      const sc=lm.score||{},c1=N2C[t1],c2=N2C[t2],ft=sc.ft;
+      if(ft&&c1&&c2){
+        const rec={h:c1,a:c2,hs:ft[0],as:ft[1],d:lm.date,
+          gh:(lm.goals1||[]).map(g=>[g.name,g.minute]),ga:(lm.goals2||[]).map(g=>[g.name,g.minute])};
+        // KO egal in 90' -> castigator din penalty-uri (score.p) sau prelungiri (score.et);
+        // FARA asta refetch-ul de la incarcarea paginii stergea w/p puse de update_manager.py
+        if(ft[0]===ft[1]){const p=sc.p,et=sc.et;
+          if(p&&p.length===2&&p[0]!==p[1]){rec.w=p[0]>p[1]?c1:c2;rec.p=p}
+          else if(et&&et.length===2&&et[0]!==et[1]){rec.w=et[0]>et[1]?c1:c2}}
+        out.push(rec)}}
     if(out.length>=LIVE.results.length){LIVE.results=out;LIVE.fetched=new Date().toISOString().slice(0,10);buildLive();route()}
     if(btn){btn.textContent='✓ '+out.length+' rezultate'}}
   catch(e){if(btn)btn.textContent='↻ offline'}
@@ -966,11 +976,15 @@ V.group=function(g){
 V.matches=function(){let cur='';
   const stages=['group','r32','r16','qf','sf','third','final'];
   const chips=`<div class="chips">${stages.map(s=>`<button class="chip" onclick="document.getElementById('st-${s}')?.scrollIntoView({block:'start'})">${STG[s]}</button>`).join('')}</div>`;
-  const list=DATA.matches.map((m,ix)=>{const k=dayKey(m.ko);let h='';
-    if(k!==cur){cur=k;const firstStage=DATA.matches.find(x=>x.stage===m.stage)===m;
-      h=`${ix?'</div>':''}<div class="dhead" ${firstStage?`id="st-${m.stage}"`:''}>${k}<small>${STG[m.stage]}</small></div><div class="panel">`}
-    return h+mRow2(m)}).join('')+'</div>';
-  return `<div class="h1">Calendarul complet</div><div class="sub">104 meciuri · orele în fusul tău orar · click pe orice meci pentru detalii, marcatori și istoricul direct.</div>${chips}${list}`};
+  const seen=new Set();
+  // MSORT (cronologic), nu DATA.matches (ordinea numerelor FIFA != ordinea kickoff)
+  const list=MSORT.map((m,ix)=>{const k=dayKey(m.ko);let h='';
+    if(k!==cur){cur=k;
+      h=`${ix?'</div>':''}<div class="dhead">${k}<small>${STG[m.stage]}</small></div><div class="panel">`}
+    let anch='';
+    if(!seen.has(m.stage)){seen.add(m.stage);anch=`<span id="st-${m.stage}"></span>`}
+    return h+anch+mRow2(m)}).join('')+'</div>';
+  return `<div class="h1">Calendarul complet</div><div class="sub">104 meciuri · în ordine cronologică, orele în fusul tău orar · click pe orice meci pentru detalii, marcatori și istoricul direct.</div>${chips}${list}`};
 V.venues=function(){const max=Math.max(...DATA.venues.map(v=>v.cap));
   return `<div class="h1">Stadioane</div><div class="sub">16 arene în trei țări — cel mai mare turneu din istorie. Fotografii: Wikimedia Commons.</div>
   <div class="grid vens">${DATA.venues.map(v=>`<div class="panel">
@@ -979,8 +993,8 @@ V.venues=function(){const max=Math.max(...DATA.venues.map(v=>v.cap));
     <div class="bar"><i style="width:${Math.round(v.cap/max*100)}%"></i></div>
     <div class="cap"><span>Capacitate</span><b>${num(v.cap)}</b></div></div></div>`).join('')}</div>`};
 V.home=function(){const now=new Date();
-  const todays=DATA.matches.filter(m=>koDate(m.ko).toDateString()===now.toDateString());
-  const upcoming=todays.length?todays:DATA.matches.filter(m=>koDate(m.ko)>now).slice(0,4);
+  const todays=MSORT.filter(m=>koDate(m.ko).toDateString()===now.toDateString());
+  const upcoming=todays.length?todays:MSORT.filter(m=>koDate(m.ko)>now).slice(0,4);
   const tsc=Object.entries(SCORERS).map(([k,v])=>{const[c,n]=k.split('|');return{c,n,v}}).sort((a,b)=>b.v-a.v).slice(0,8);
   const topCaps=[...PL].filter(p=>p.cp!=null).sort((a,b)=>b.cp-a.cp).slice(0,8);
   const topVal=[...PL].sort((a,b)=>(b.v||0)-(a.v||0)).slice(0,8);
