@@ -1015,7 +1015,7 @@ V.home=function(){const now=new Date();
   const lrow=(arr,vf)=>arr.map((p,i)=>`<div class="lrow" onclick="openPid('${esc(pidOf(p)).replace(/'/g,"\\'")}')"><span class="i">${i+1}</span>${pAva(p,28)}<span><b>${esc(p.n)}</b><br><span class="c">${esc(p.tn)} · ${esc(fmStr(fmOf(p)))}</span></span><span class="v">${vf(p)}</span></div>`).join('');
   return `<div class="eyebrow">Canada · Mexic · SUA — 11 iunie → 19 iulie 2026</div>
   <div class="h1">Cupa Mondială FIFA 2026</div>
-  <div class="sub">48 de echipe · ${num(PL.length)} jucători · 104 meciuri pe 16 stadioane. Actualizat automat: ${DATA.updated||LIVE.fetched||'–'} (de mai multe ori pe zi · butonul ↻ pentru scoruri live).</div>
+  <div class="sub">🏆 <b style="color:var(--go)">Campioană mondială: Spania</b> (1–0 d.p. cu Argentina, 19 iulie) · 48 de echipe · ${num(PL.length)} jucători · 104 meciuri. <b>Arhivă finală</b> — turneul s-a încheiat; datele nu se mai actualizează.</div>
   <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(290px,1fr))">
     <div class="panel"><div class="ph">⚽ ${todays.length?'Meciurile de azi':'Următoarele meciuri'}</div>
       ${upcoming.map(mRow2).join('')||'<div class="empty">–</div>'}
@@ -1036,11 +1036,12 @@ V.leaders=function(){const trow=(arr)=>arr.map(([t,v],i)=>`<a class="lrow" href=
     <div class="panel"><div class="ph">💎 Top valori de piață* — jucători</div>${lrow(topVal,p=>fmtV(p.v))}<div class="estnote">* estimare model WC26M — nu Transfermarkt.</div></div>
     <div class="panel"><div class="ph">💰 Cele mai valoroase loturi*</div>${trow(valT)}</div></div>`};
 /* ---------- bara de sus + kickoff ---------- */
-$('#contBtn').insertAdjacentHTML('beforebegin',`<span id="enrst"></span><button class="iref" id="refBtn" title="Actualizează scorurile din openfootball (necesită internet)">↻ Scoruri</button>`);
-$('#refBtn').onclick=()=>refreshLive($('#refBtn'));
+/* ARHIVĂ (20.07.2026): turneul s-a încheiat — refetch-ul de scoruri e oprit
+   permanent (datele finale, 104/104, sunt embedate). refreshLive rămâne în
+   cod doar ca referință; nu mai e apelat de nicăieri. */
+$('#contBtn').insertAdjacentHTML('beforebegin',`<span id="enrst"></span><span class="iref" style="cursor:default" title="Turneu încheiat — date finale">🏆 Arhivă finală</span>`);
 $('.credit').innerHTML=`Date: FIFA via open-source (emrbli/worldcup · openfootball CC0), Wikipedia/Wikidata (CC BY-SA), rezultate live: openfootball. Poze: FIFA / Wikimedia Commons.<br><b>Valorile de piață sunt estimări</b> (model propriu), nu Transfermarkt.`;
 route();
-refreshLive(null);
 enrich();
 </script>
 </body>
